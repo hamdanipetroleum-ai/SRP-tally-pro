@@ -3,41 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SRP Tally & Deviated Wellbore Visualizer</title>
+    <title>SRP Tally & Automated Roller Guide Design Visualizer</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        canvas { background: #0f172a; border-radius: 8px; }
-        /* Custom Scrollbar for dynamic tables */
+        canvas { background: #090d16; border-radius: 10px; }
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen pb-12">
+<body class="bg-slate-950 text-slate-100 min-h-screen pb-12">
 
     <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 p-4 shadow-lg sticky top-0 z-50">
+    <header class="bg-slate-900 border-b border-slate-800 p-4 shadow-xl sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="p-2 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-500/30">
-                    <i data-lucide="layers" class="w-6 h-6"></i>
+                <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 shadow-inner">
+                    <i data-lucide="cpu" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-amber-400 leading-tight">SRP Tally & Wellbore Visualizer</h1>
-                    <p class="text-xs text-slate-400">Integrated Casing Survey, Roller Guides, & Rod Tally Generator</p>
+                    <h1 class="text-xl font-bold text-amber-400 leading-tight">SRP Tally & Roller Guide Auto-Designer</h1>
+                    <p class="text-xs text-slate-400">Automated Friction Zone Detection & Dynamic Roller Guide Placement System</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="exportTallyCSV()" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow">
-                    <i data-lucide="download" class="w-4 h-4"></i> Download Tally (CSV)
+                <button onclick="exportTallyCSV()" class="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg text-xs transition shadow-lg">
+                    <i data-lucide="download" class="w-4 h-4"></i> Export Schedule (CSV)
                 </button>
-                <button onclick="calculateAndDraw()" class="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-5 rounded-lg text-sm transition shadow">
-                    <i data-lucide="play" class="w-4 h-4 fill-current"></i> Render Schematic
+                <button onclick="calculateAndDraw()" class="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-5 rounded-lg text-xs transition shadow-lg">
+                    <i data-lucide="play" class="w-4 h-4 fill-current"></i> Hitung & Render
                 </button>
             </div>
         </div>
@@ -48,49 +48,71 @@
         <!-- Left Controls (5 Cols) -->
         <div class="lg:col-span-5 space-y-5">
 
-            <!-- Well General Data -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-sm">
-                <h2 class="text-sm font-semibold text-amber-400 mb-3 flex items-center gap-2 border-b border-slate-700 pb-2">
-                    <i data-lucide="database" class="w-4 h-4"></i> Data Informasi Sumur
+            <!-- Summary Dashboard Cards -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 shadow">
+                    <span class="text-[10px] uppercase font-semibold text-slate-400 block">Total Rods</span>
+                    <span id="cardTotalRods" class="text-lg font-bold text-sky-400 font-mono">0</span>
+                    <span class="text-[9px] text-slate-500 block">Joints / Sections</span>
+                </div>
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 shadow">
+                    <span class="text-[10px] uppercase font-semibold text-slate-400 block">Roller Guides</span>
+                    <span id="cardTotalGuides" class="text-lg font-bold text-amber-400 font-mono">0</span>
+                    <span class="text-[9px] text-slate-500 block">Guides Recom.</span>
+                </div>
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 shadow">
+                    <span class="text-[10px] uppercase font-semibold text-slate-400 block">Max DLS / Inc</span>
+                    <span id="cardMaxRisk" class="text-lg font-bold text-rose-400 font-mono">0°</span>
+                    <span class="text-[9px] text-slate-500 block">Side Load Zone</span>
+                </div>
+            </div>
+
+            <!-- General Well Parameters -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
+                <h2 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <i data-lucide="sliders" class="w-4 h-4"></i> Parameter Sumur & Pompa
                 </h2>
                 <div class="grid grid-cols-2 gap-3 text-xs">
                     <div>
                         <label class="block text-slate-400 mb-1">Nama Sumur</label>
-                        <input type="text" id="wellName" value="WELL-SRP#01" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white font-mono focus:border-amber-500 outline-none">
+                        <input type="text" id="wellName" value="WELL-SRP#01-DEV" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white font-mono focus:border-amber-500 outline-none">
                     </div>
                     <div>
                         <label class="block text-slate-400 mb-1">Total Depth / TD (ft)</label>
-                        <input type="number" id="maxDepth" value="3500" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white font-mono focus:border-amber-500 outline-none">
+                        <input type="number" id="maxDepth" value="3800" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white font-mono focus:border-amber-500 outline-none">
                     </div>
                     <div>
                         <label class="block text-slate-400 mb-1">Tubing Size (in)</label>
-                        <input type="number" id="tubingOD" value="2.875" step="0.001" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white font-mono focus:border-amber-500 outline-none">
+                        <input type="number" id="tubingOD" value="2.875" step="0.001" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white font-mono focus:border-amber-500 outline-none">
                     </div>
                     <div>
                         <label class="block text-slate-400 mb-1">Pump Depth (ft)</label>
-                        <input type="number" id="pumpDepth" value="3000" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white font-mono focus:border-amber-500 outline-none">
+                        <input type="number" id="pumpDepth" value="3400" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white font-mono focus:border-amber-500 outline-none">
                     </div>
                 </div>
             </div>
 
-            <!-- Dynamic Casing Survey Table Input -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-sm">
-                <div class="flex justify-between items-center mb-2 border-b border-slate-700 pb-2">
-                    <h2 class="text-sm font-semibold text-amber-400 flex items-center gap-2">
-                        <i data-lucide="compass" class="w-4 h-4"></i> Casing Survey Data (Deviated)
-                    </h2>
-                    <button onclick="addCasingRow()" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-400 px-2 py-1 rounded flex items-center gap-1 border border-slate-600">
+            <!-- Casing Trajectory Survey Input -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
+                <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-2">
+                    <div>
+                        <h2 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="navigation" class="w-4 h-4"></i> Casing Survey Trajectory
+                        </h2>
+                        <p class="text-[10px] text-slate-400">MD & Inclination menentukan DLS & Friction Zone</p>
+                    </div>
+                    <button onclick="addCasingRow()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-amber-400 px-2.5 py-1 rounded-lg flex items-center gap-1 border border-slate-700 transition">
                         <i data-lucide="plus" class="w-3 h-3"></i> Tambah Point
                     </button>
                 </div>
-                <div class="max-h-40 overflow-y-auto pr-1">
+                <div class="max-h-44 overflow-y-auto pr-1">
                     <table class="w-full text-xs text-left">
-                        <thead class="text-slate-400 bg-slate-900/50 sticky top-0">
+                        <thead class="text-slate-400 bg-slate-950 sticky top-0">
                             <tr>
-                                <th class="p-1.5 border-b border-slate-700">MD (ft)</th>
-                                <th class="p-1.5 border-b border-slate-700">Inclination (°)</th>
-                                <th class="p-1.5 border-b border-slate-700">Casing OD (in)</th>
-                                <th class="p-1.5 border-b border-slate-700 text-center">Aksi</th>
+                                <th class="p-1.5 border-b border-slate-800">MD (ft)</th>
+                                <th class="p-1.5 border-b border-slate-800">Inclination (°)</th>
+                                <th class="p-1.5 border-b border-slate-800">Casing OD (in)</th>
+                                <th class="p-1.5 border-b border-slate-800 text-center">Hapus</th>
                             </tr>
                         </thead>
                         <tbody id="casingTableBody">
@@ -100,27 +122,41 @@
                 </div>
             </div>
 
-            <!-- Sucker Rod & Roller Guide Tally Setup -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-sm">
-                <div class="flex justify-between items-center mb-2 border-b border-slate-700 pb-2">
-                    <h2 class="text-sm font-semibold text-amber-400 flex items-center gap-2">
-                        <i data-lucide="git-commit" class="w-4 h-4"></i> Sucker Rod & Roller Guide Tally
+            <!-- Sucker Rod Config & Placement Mode -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
+                <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="settings" class="w-4 h-4"></i> Design Mode & Rod Tally
                     </h2>
-                    <button onclick="addRodRow()" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-400 px-2 py-1 rounded flex items-center gap-1 border border-slate-600">
-                        <i data-lucide="plus" class="w-3 h-3"></i> Tambah Rod Section
+                    <button onclick="addRodRow()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-amber-400 px-2.5 py-1 rounded-lg flex items-center gap-1 border border-slate-700 transition">
+                        <i data-lucide="plus" class="w-3 h-3"></i> Tambah Rod
                     </button>
                 </div>
-                <p class="text-[11px] text-slate-400 mb-2">Atur urutan Rod dari Atas (Top) ke Bawah (Bottom). Centang Roller Guide jika dipasang pada seksion tersebut.</p>
-                
-                <div class="max-h-56 overflow-y-auto pr-1">
+
+                <!-- Mode Switcher -->
+                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 mb-3 space-y-2">
+                    <label class="block text-[11px] font-semibold text-slate-300">Mode Desain Roller Guide:</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center gap-2 bg-slate-900 p-2 rounded border border-slate-800 cursor-pointer hover:border-amber-500/50">
+                            <input type="radio" name="guideMode" value="auto" checked onchange="toggleDesignMode()" class="accent-amber-500">
+                            <span class="text-amber-400 font-semibold text-[11px]">Auto-Calculate</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-900 p-2 rounded border border-slate-800 cursor-pointer hover:border-amber-500/50">
+                            <input type="radio" name="guideMode" value="manual" onchange="toggleDesignMode()" class="accent-amber-500">
+                            <span class="text-slate-300 text-[11px]">Manual Override</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="max-h-52 overflow-y-auto pr-1">
                     <table class="w-full text-xs text-left">
-                        <thead class="text-slate-400 bg-slate-900/50 sticky top-0">
+                        <thead class="text-slate-400 bg-slate-950 sticky top-0">
                             <tr>
-                                <th class="p-1.5 border-b border-slate-700">Tipe / Deskripsi</th>
-                                <th class="p-1.5 border-b border-slate-700">OD (in)</th>
-                                <th class="p-1.5 border-b border-slate-700">Panjang (ft)</th>
-                                <th class="p-1.5 border-b border-slate-700 text-center">Roller Guide</th>
-                                <th class="p-1.5 border-b border-slate-700 text-center">Aksi</th>
+                                <th class="p-1.5 border-b border-slate-800">Tipe / Item</th>
+                                <th class="p-1.5 border-b border-slate-800">OD (in)</th>
+                                <th class="p-1.5 border-b border-slate-800">Length (ft)</th>
+                                <th class="p-1.5 border-b border-slate-800 text-center">Guides/Rod</th>
+                                <th class="p-1.5 border-b border-slate-800 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="rodTableBody">
@@ -132,42 +168,45 @@
 
         </div>
 
-        <!-- Right Visual Canvas & Dynamic Output (7 Cols) -->
+        <!-- Right Visual Canvas & Tally Schedule (7 Cols) -->
         <div class="lg:col-span-7 space-y-5">
 
-            <!-- Canvas Visualization -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-sm">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-sm font-semibold text-amber-400 flex items-center gap-2">
-                        <i data-lucide="activity" class="w-4 h-4"></i> Schematic Visualizer Sumur Miring (Deviated)
+            <!-- Wellbore Canvas View -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+                    <h2 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="eye" class="w-4 h-4"></i> Visual Schematic Sumur & Roller Guide Location
                     </h2>
-                    <div class="flex gap-4 text-xs">
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block"></span> Casing</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Rod</span>
+                    <div class="flex flex-wrap gap-3 text-[11px]">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500/50 border border-rose-400 inline-block"></span> High Friction</span>
                         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Roller Guide</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span> Sucker Rod</span>
                     </div>
                 </div>
-                <div class="w-full flex justify-center bg-slate-950 p-2 rounded-lg border border-slate-800">
-                    <canvas id="wellCanvas" width="560" height="640" class="w-full h-auto shadow-inner"></canvas>
+                <div class="w-full flex justify-center bg-slate-950 p-2 rounded-xl border border-slate-800/80">
+                    <canvas id="wellCanvas" width="560" height="660" class="w-full h-auto shadow-inner"></canvas>
                 </div>
             </div>
 
-            <!-- Detailed Calculated Tally Summary Table -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-sm">
-                <h2 class="text-sm font-semibold text-amber-400 mb-3 flex items-center gap-2 border-b border-slate-700 pb-2">
-                    <i data-lucide="table" class="w-4 h-4"></i> Hasil Perhitungan Tally Rod & Depth Summary
-                </h2>
-                <div class="overflow-x-auto max-h-52 overflow-y-auto">
+            <!-- Detailed Calculated Tally Schedule Table -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
+                <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="list-checks" class="w-4 h-4"></i> Rekapitulasi Tally & Schedule Roller Guide
+                    </h2>
+                    <span class="text-[10px] text-slate-400">Rekomendasi Berdasarkan Trajectory Survey</span>
+                </div>
+                <div class="overflow-x-auto max-h-56 overflow-y-auto">
                     <table class="w-full text-xs text-left text-slate-300">
-                        <thead class="bg-slate-900 text-amber-400 uppercase sticky top-0">
+                        <thead class="bg-slate-950 text-amber-400 uppercase sticky top-0 font-semibold text-[10px]">
                             <tr>
-                                <th class="p-2 border border-slate-700">#</th>
-                                <th class="p-2 border border-slate-700">Komponen</th>
-                                <th class="p-2 border border-slate-700">OD (in)</th>
-                                <th class="p-2 border border-slate-700">Length (ft)</th>
-                                <th class="p-2 border border-slate-700">Top Depth (ft)</th>
-                                <th class="p-2 border border-slate-700">Bottom Depth (ft)</th>
-                                <th class="p-2 border border-slate-700 text-center">Roller Guide</th>
+                                <th class="p-2 border border-slate-800">#</th>
+                                <th class="p-2 border border-slate-800">Komponen Rod</th>
+                                <th class="p-2 border border-slate-800">OD</th>
+                                <th class="p-2 border border-slate-800">Depth (ft)</th>
+                                <th class="p-2 border border-slate-800">Risk Level</th>
+                                <th class="p-2 border border-slate-800 text-center">Density Guide</th>
+                                <th class="p-2 border border-slate-800 text-center">Total Guides</th>
                             </tr>
                         </thead>
                         <tbody id="tallySummaryBody">
@@ -182,25 +221,26 @@
     </main>
 
     <script>
-        // Initial Default Data
+        // State Management
         let casingSurveys = [
             { md: 0, inc: 0, od: 7.00 },
-            { md: 800, inc: 0, od: 7.00 },
-            { md: 1800, inc: 25, od: 7.00 },
-            { md: 3200, inc: 38, od: 7.00 }
+            { md: 900, inc: 0, od: 7.00 },
+            { md: 1700, inc: 18, od: 7.00 },
+            { md: 2600, inc: 42, od: 7.00 },
+            { md: 3800, inc: 45, od: 7.00 }
         ];
 
         let rodStrings = [
-            { name: "Polished Rod", od: 1.25, len: 26, roller: false },
-            { name: "Sucker Rod 7/8\"", od: 0.875, len: 1200, roller: false },
-            { name: "Sucker Rod 3/4\" (Guided)", od: 0.750, len: 1000, roller: true },
-            { name: "Sucker Rod 3/4\"", od: 0.750, len: 764, roller: false },
-            { name: "SRP Subsurface Pump", od: 1.75, len: 10, roller: false }
+            { name: "Polished Rod", od: 1.25, len: 26, manualGuides: 0 },
+            { name: "Sucker Rod 7/8\" (Top)", od: 0.875, len: 1200, manualGuides: 0 },
+            { name: "Sucker Rod 7/8\" (Middle)", od: 0.875, len: 1000, manualGuides: 1 },
+            { name: "Sucker Rod 3/4\" (Bottom)", od: 0.750, len: 1164, manualGuides: 2 },
+            { name: "SRP Subsurface Pump", od: 1.75, len: 10, manualGuides: 0 }
         ];
 
         let computedTally = [];
+        let designMode = 'auto'; // 'auto' or 'manual'
 
-        // Initialize App
         window.onload = function() {
             renderCasingInputs();
             renderRodInputs();
@@ -208,15 +248,24 @@
             lucide.createIcons();
         };
 
-        // Render Dynamic UI Controls
+        function toggleDesignMode() {
+            const radios = document.getElementsByName('guideMode');
+            for (let r of radios) {
+                if (r.checked) designMode = r.value;
+            }
+            renderRodInputs();
+            calculateAndDraw();
+        }
+
+        // Render Survey Table
         function renderCasingInputs() {
             const tbody = document.getElementById('casingTableBody');
             tbody.innerHTML = '';
             casingSurveys.forEach((item, index) => {
-                let row = `<tr class="border-b border-slate-700/50">
-                    <td class="p-1"><input type="number" value="${item.md}" onchange="updateCasing(${index}, 'md', this.value)" class="w-full bg-slate-900 p-1 border border-slate-700 rounded text-white font-mono"></td>
-                    <td class="p-1"><input type="number" value="${item.inc}" onchange="updateCasing(${index}, 'inc', this.value)" class="w-full bg-slate-900 p-1 border border-slate-700 rounded text-white font-mono"></td>
-                    <td class="p-1"><input type="number" step="0.1" value="${item.od}" onchange="updateCasing(${index}, 'od', this.value)" class="w-full bg-slate-900 p-1 border border-slate-700 rounded text-white font-mono"></td>
+                let row = `<tr class="border-b border-slate-800/60">
+                    <td class="p-1"><input type="number" value="${item.md}" onchange="updateCasing(${index}, 'md', this.value)" class="w-full bg-slate-950 p-1 border border-slate-800 rounded text-white font-mono"></td>
+                    <td class="p-1"><input type="number" value="${item.inc}" onchange="updateCasing(${index}, 'inc', this.value)" class="w-full bg-slate-950 p-1 border border-slate-800 rounded text-white font-mono"></td>
+                    <td class="p-1"><input type="number" step="0.1" value="${item.od}" onchange="updateCasing(${index}, 'od', this.value)" class="w-full bg-slate-950 p-1 border border-slate-800 rounded text-white font-mono"></td>
                     <td class="p-1 text-center">
                         <button onclick="removeCasingRow(${index})" class="text-rose-400 hover:text-rose-300 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                     </td>
@@ -226,20 +275,23 @@
             lucide.createIcons();
         }
 
+        // Render Rod Inputs Table
         function renderRodInputs() {
             const tbody = document.getElementById('rodTableBody');
             tbody.innerHTML = '';
             rodStrings.forEach((item, index) => {
-                let isPumpOrPR = index === 0 || index === rodStrings.length - 1;
-                let row = `<tr class="border-b border-slate-700/50">
-                    <td class="p-1"><input type="text" value="${item.name}" onchange="updateRod(${index}, 'name', this.value)" class="w-full bg-slate-900 p-1 border border-slate-700 rounded text-white font-mono"></td>
-                    <td class="p-1"><input type="number" step="0.001" value="${item.od}" onchange="updateRod(${index}, 'od', this.value)" class="w-full bg-slate-900 p-1 border border-slate-700 rounded text-white font-mono"></td>
-                    <td class="p-1"><input type="number" value="${item.len}" onchange="updateRod(${index}, 'len', this.value)" class="w-full bg-slate-900 p-1 border border-slate-700 rounded text-white font-mono"></td>
+                let isFixed = index === 0 || index === rodStrings.length - 1;
+                let row = `<tr class="border-b border-slate-800/60">
+                    <td class="p-1"><input type="text" value="${item.name}" onchange="updateRod(${index}, 'name', this.value)" class="w-full bg-slate-950 p-1 border border-slate-800 rounded text-white font-mono"></td>
+                    <td class="p-1"><input type="number" step="0.001" value="${item.od}" onchange="updateRod(${index}, 'od', this.value)" class="w-full bg-slate-950 p-1 border border-slate-800 rounded text-white font-mono"></td>
+                    <td class="p-1"><input type="number" value="${item.len}" onchange="updateRod(${index}, 'len', this.value)" class="w-full bg-slate-950 p-1 border border-slate-800 rounded text-white font-mono"></td>
                     <td class="p-1 text-center">
-                        <input type="checkbox" ${item.roller ? 'checked' : ''} onchange="updateRod(${index}, 'roller', this.checked)" class="accent-amber-500 w-4 h-4 cursor-pointer">
+                        ${designMode === 'manual' ? 
+                            `<input type="number" min="0" max="4" value="${item.manualGuides}" onchange="updateRod(${index}, 'manualGuides', this.value)" class="w-12 bg-slate-950 text-center p-1 border border-amber-500/50 rounded text-amber-400 font-bold font-mono">` 
+                            : `<span class="text-[10px] text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">AUTO</span>`}
                     </td>
                     <td class="p-1 text-center">
-                        ${!isPumpOrPR ? `<button onclick="removeRodRow(${index})" class="text-rose-400 hover:text-rose-300 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                        ${!isFixed ? `<button onclick="removeRodRow(${index})" class="text-rose-400 hover:text-rose-300 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
                     </td>
                 </tr>`;
                 tbody.innerHTML += row;
@@ -247,7 +299,6 @@
             lucide.createIcons();
         }
 
-        // Data Handlers
         function addCasingRow() {
             let lastMD = casingSurveys.length > 0 ? casingSurveys[casingSurveys.length - 1].md + 500 : 0;
             let lastInc = casingSurveys.length > 0 ? casingSurveys[casingSurveys.length - 1].inc + 5 : 0;
@@ -267,8 +318,7 @@
         }
 
         function addRodRow() {
-            // Insert before the pump (last item)
-            rodStrings.splice(rodStrings.length - 1, 0, { name: "Sucker Rod", od: 0.750, len: 500, roller: false });
+            rodStrings.splice(rodStrings.length - 1, 0, { name: "Sucker Rod 3/4\"", od: 0.750, len: 500, manualGuides: 1 });
             renderRodInputs();
         }
 
@@ -278,23 +328,79 @@
         }
 
         function updateRod(index, field, val) {
-            if (field === 'roller') {
-                rodStrings[index][field] = val;
-            } else if (field === 'name') {
+            if (field === 'name') {
                 rodStrings[index][field] = val;
             } else {
                 rodStrings[index][field] = parseFloat(val) || 0;
             }
         }
 
-        // Main Calculation and Visualization Engine
-        function calculateAndDraw() {
-            // Sort Casing Surveys by MD
+        // Trajectory Interpolation & Dogleg Severity / Friction Analysis
+        function getSurveyAtMD(md) {
             casingSurveys.sort((a, b) => a.md - b.md);
+            if (casingSurveys.length === 0) return { inc: 0, dls: 0 };
 
-            // Compute Rod Tally Table
+            if (md <= casingSurveys[0].md) {
+                return { inc: casingSurveys[0].inc, dls: 0 };
+            }
+            if (md >= casingSurveys[casingSurveys.length - 1].md) {
+                return { inc: casingSurveys[casingSurveys.length - 1].inc, dls: 0 };
+            }
+
+            for (let i = 0; i < casingSurveys.length - 1; i++) {
+                let s1 = casingSurveys[i];
+                let s2 = casingSurveys[i+1];
+                if (md >= s1.md && md <= s2.md) {
+                    let ratio = (md - s1.md) / (s2.md - s1.md);
+                    let inc = s1.inc + ratio * (s2.inc - s1.inc);
+                    let deltaInc = Math.abs(s2.inc - s1.inc);
+                    let deltaMD = (s2.md - s1.md) || 1;
+                    let dls = (deltaInc / deltaMD) * 100; // Degrees per 100 ft
+                    return { inc, dls };
+                }
+            }
+            return { inc: 0, dls: 0 };
+        }
+
+        // Roller Guide Auto-Placement Algorithm
+        function analyzeFrictionAndGuides(topDepth, bottomDepth) {
+            let midDepth = (topDepth + bottomDepth) / 2;
+            let survey = getSurveyAtMD(midDepth);
+            let inc = survey.inc;
+            let dls = survey.dls;
+
+            let riskLevel = "LOW";
+            let guidesPerRod = 0; // Standard rod = 30 ft
+            let guideDesc = "No Guide";
+
+            // Friction Criteria based on Inclination & Dogleg Severity
+            if (inc >= 35 || dls >= 3.0) {
+                riskLevel = "HIGH";
+                guidesPerRod = 3; // High density placement (1 guide per 10 ft / 3 per rod)
+                guideDesc = "3 Guides / Rod (High Side Load)";
+            } else if (inc >= 20 || dls >= 1.5) {
+                riskLevel = "MEDIUM";
+                guidesPerRod = 2; // Medium density (2 per rod)
+                guideDesc = "2 Guides / Rod (Moderate Load)";
+            } else if (inc >= 8 || dls >= 0.8) {
+                riskLevel = "SLIGHT";
+                guidesPerRod = 1; // Low density (1 per rod)
+                guideDesc = "1 Guide / Rod (Centralizer)";
+            }
+
+            return { inc, dls, riskLevel, guidesPerRod, guideDesc };
+        }
+
+        function calculateAndDraw() {
+            casingSurveys.sort((a, b) => a.md - b.md);
+            const pumpDepth = parseFloat(document.getElementById('pumpDepth').value) || 3400;
+
             computedTally = [];
             let currentDepth = 0;
+            let totalGuideCount = 0;
+            let totalRodJoints = 0;
+            let maxIncVal = 0;
+
             const summaryBody = document.getElementById('tallySummaryBody');
             summaryBody.innerHTML = '';
 
@@ -303,6 +409,17 @@
                 let bottom = currentDepth + item.len;
                 currentDepth = bottom;
 
+                let analysis = analyzeFrictionAndGuides(top, bottom);
+                if (analysis.inc > maxIncVal) maxIncVal = analysis.inc;
+
+                let guidesPerJoint = designMode === 'auto' ? analysis.guidesPerRod : item.manualGuides;
+                let estimatedJoints = Math.ceil(item.len / 30); // Assuming standard 30ft rod
+                if (idx === 0 || idx === rodStrings.length - 1) estimatedJoints = 1; // PR & Pump
+
+                let sectionGuides = (idx === 0 || idx === rodStrings.length - 1) ? 0 : guidesPerJoint * estimatedJoints;
+                totalGuideCount += sectionGuides;
+                if (idx > 0 && idx < rodStrings.length - 1) totalRodJoints += estimatedJoints;
+
                 let record = {
                     no: idx + 1,
                     name: item.name,
@@ -310,87 +427,93 @@
                     len: item.len,
                     top: top,
                     bottom: bottom,
-                    roller: item.roller
+                    inc: analysis.inc,
+                    dls: analysis.dls,
+                    riskLevel: analysis.riskLevel,
+                    guidesPerJoint: guidesPerJoint,
+                    totalSectionGuides: sectionGuides,
+                    joints: estimatedJoints
                 };
                 computedTally.push(record);
 
-                let row = `<tr class="border-b border-slate-700/60 hover:bg-slate-700/30">
-                    <td class="p-2 border border-slate-700 font-mono">${record.no}</td>
-                    <td class="p-2 border border-slate-700 font-medium text-amber-300">${record.name}</td>
-                    <td class="p-2 border border-slate-700 font-mono">${record.od}"</td>
-                    <td class="p-2 border border-slate-700 font-mono">${record.len}</td>
-                    <td class="p-2 border border-slate-700 font-mono text-emerald-400">${record.top.toFixed(1)}</td>
-                    <td class="p-2 border border-slate-700 font-mono text-emerald-400">${record.bottom.toFixed(1)}</td>
-                    <td class="p-2 border border-slate-700 text-center">
-                        ${record.roller ? '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-bold">YES</span>' : '<span class="text-slate-500">-</span>'}
-                    </td>
+                // Badge styling
+                let riskBadge = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-bold">LOW</span>`;
+                if (record.riskLevel === 'MEDIUM') riskBadge = `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-bold">MEDIUM</span>`;
+                if (record.riskLevel === 'HIGH') riskBadge = `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded text-[10px] font-bold">HIGH</span>`;
+
+                let row = `<tr class="border-b border-slate-800/80 hover:bg-slate-800/40">
+                    <td class="p-2 border border-slate-800 font-mono">${record.no}</td>
+                    <td class="p-2 border border-slate-800 font-medium text-amber-300">${record.name}</td>
+                    <td class="p-2 border border-slate-800 font-mono">${record.od}"</td>
+                    <td class="p-2 border border-slate-800 font-mono text-slate-300">${record.top.toFixed(0)} - ${record.bottom.toFixed(0)} ft</td>
+                    <td class="p-2 border border-slate-800">${riskBadge}</td>
+                    <td class="p-2 border border-slate-800 text-center font-mono font-bold text-amber-400">${record.guidesPerJoint} / rod</td>
+                    <td class="p-2 border border-slate-800 text-center font-mono font-bold text-sky-400">${record.totalSectionGuides}</td>
                 </tr>`;
                 summaryBody.innerHTML += row;
             });
+
+            // Update Summary Dashboard
+            document.getElementById('cardTotalRods').innerText = totalRodJoints;
+            document.getElementById('cardTotalGuides').innerText = totalGuideCount;
+            document.getElementById('cardMaxRisk').innerText = `${maxIncVal.toFixed(1)}°`;
 
             // Draw Visual Schematic on Canvas
             drawSchematicCanvas();
         }
 
-        // Trajectory Interpolation for Survey Points
         function getCoordinatesForMD(md, maxDepth, canvasWidth, canvasHeight) {
-            const startX = 100;
-            const startY = 50;
-            const drawHeight = canvasHeight - 80;
+            const startX = 110;
+            const startY = 55;
+            const drawHeight = canvasHeight - 90;
             const scaleY = drawHeight / maxDepth;
 
-            // Interpolate inclination angle for given MD
-            let inc = 0;
-            if (casingSurveys.length > 0) {
-                if (md <= casingSurveys[0].md) {
-                    inc = casingSurveys[0].inc;
-                } else if (md >= casingSurveys[casingSurveys.length - 1].md) {
-                    inc = casingSurveys[casingSurveys.length - 1].inc;
-                } else {
-                    for (let i = 0; i < casingSurveys.length - 1; i++) {
-                        if (md >= casingSurveys[i].md && md <= casingSurveys[i+1].md) {
-                            let ratio = (md - casingSurveys[i].md) / (casingSurveys[i+1].md - casingSurveys[i].md);
-                            inc = casingSurveys[i].inc + ratio * (casingSurveys[i+1].inc - casingSurveys[i].inc);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Calculate non-linear X offset simulation based on inclination
-            let rad = (inc * Math.PI) / 180;
+            let survey = getSurveyAtMD(md);
+            let rad = (survey.inc * Math.PI) / 180;
             let deltaY = md * scaleY;
-            let deltaX = Math.sin(rad) * (deltaY * 0.65);
+            let deltaX = Math.sin(rad) * (deltaY * 0.7);
 
-            return { x: startX + deltaX, y: startY + deltaY, angle: inc };
+            return { x: startX + deltaX, y: startY + deltaY, angle: survey.inc };
         }
 
         function drawSchematicCanvas() {
             const canvas = document.getElementById('wellCanvas');
             const ctx = canvas.getContext('2d');
-            const maxDepth = parseFloat(document.getElementById('maxDepth').value) || 3500;
-            const pumpDepth = parseFloat(document.getElementById('pumpDepth').value) || 3000;
+            const maxDepth = parseFloat(document.getElementById('maxDepth').value) || 3800;
+            const pumpDepth = parseFloat(document.getElementById('pumpDepth').value) || 3400;
             const wellName = document.getElementById('wellName').value;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Surface Line
-            ctx.strokeStyle = '#64748b';
+            // Surface Header Line
+            ctx.strokeStyle = '#475569';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(20, 50);
-            ctx.lineTo(canvas.width - 20, 50);
+            ctx.moveTo(20, 55);
+            ctx.lineTo(canvas.width - 20, 55);
             ctx.stroke();
 
             ctx.fillStyle = '#f59e0b';
             ctx.font = 'bold 12px sans-serif';
-            ctx.fillText("SURFACE / RIG FLOOR", 25, 38);
-            ctx.fillText(`Sumur: ${wellName}`, canvas.width - 170, 38);
+            ctx.fillText("SURFACE / RIG FLOOR", 25, 42);
+            ctx.fillText(`Well: ${wellName}`, canvas.width - 190, 42);
 
-            // 1. Draw Casing Borehole Wall
+            // 1. Draw High Friction / Side Load Zones Overlay (Background Highlight)
+            for (let d = 0; d <= maxDepth; d += 20) {
+                let survey = getSurveyAtMD(d);
+                if (survey.inc >= 20 || survey.dls >= 1.5) {
+                    let pt = getCoordinatesForMD(d, maxDepth, canvas.width, canvas.height);
+                    ctx.fillStyle = survey.inc >= 35 ? 'rgba(244, 63, 94, 0.18)' : 'rgba(245, 158, 11, 0.12)';
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, 22, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // 2. Draw Outer Casing Wall
             const maxCasingShoe = casingSurveys.length > 0 ? casingSurveys[casingSurveys.length - 1].md : maxDepth;
             ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 26;
+            ctx.lineWidth = 28;
             ctx.beginPath();
             for (let d = 0; d <= maxCasingShoe; d += 20) {
                 let pt = getCoordinatesForMD(d, maxDepth, canvas.width, canvas.height);
@@ -399,9 +522,9 @@
             }
             ctx.stroke();
 
-            // Inner Hollow Casing Path
-            ctx.strokeStyle = '#0f172a';
-            ctx.lineWidth = 18;
+            // Inner Hollow Casing
+            ctx.strokeStyle = '#090d16';
+            ctx.lineWidth = 20;
             ctx.beginPath();
             for (let d = 0; d <= maxCasingShoe; d += 20) {
                 let pt = getCoordinatesForMD(d, maxDepth, canvas.width, canvas.height);
@@ -410,7 +533,7 @@
             }
             ctx.stroke();
 
-            // 2. Draw Tubing String
+            // 3. Draw Tubing String
             ctx.strokeStyle = '#64748b';
             ctx.lineWidth = 8;
             ctx.beginPath();
@@ -421,7 +544,7 @@
             }
             ctx.stroke();
 
-            ctx.strokeStyle = '#1e293b';
+            ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 4;
             ctx.beginPath();
             for (let d = 0; d <= pumpDepth; d += 20) {
@@ -431,16 +554,12 @@
             }
             ctx.stroke();
 
-            // 3. Draw Sucker Rod String & Roller Guides
+            // 4. Render Rod String & Calculated Roller Guides
             computedTally.forEach(rod => {
                 if (rod.len <= 0) return;
 
-                // Color based on type/polished/roller
-                let rodColor = '#3b82f6'; // Standard Rod
-                if (rod.no === 1) rodColor = '#38bdf8'; // Polished Rod
-                if (rod.roller) rodColor = '#fbbf24'; // Guided Rod
-
-                ctx.strokeStyle = rodColor;
+                // Rod Line
+                ctx.strokeStyle = rod.no === 1 ? '#0ea5e9' : '#38bdf8';
                 ctx.lineWidth = Math.max(2, rod.od * 3);
 
                 ctx.beginPath();
@@ -451,16 +570,22 @@
                 }
                 ctx.stroke();
 
-                // Render Roller Guides (Visual Wheels along the section)
-                if (rod.roller) {
-                    let step = (rod.bottom - rod.top) / 3;
-                    for (let g = rod.top + step/2; g < rod.bottom; g += step) {
-                        let gPt = getCoordinatesForMD(g, maxDepth, canvas.width, canvas.height);
+                // Draw Roller Guide Wheels dynamically calculated
+                if (rod.guidesPerJoint > 0 && rod.no > 1 && rod.no < computedTally.length) {
+                    let totalGuidesInSection = rod.totalSectionGuides;
+                    let step = (rod.bottom - rod.top) / (totalGuidesInSection + 1);
+
+                    for (let g = 1; g <= totalGuidesInSection; g++) {
+                        let guideDepth = rod.top + (g * step);
+                        let gPt = getCoordinatesForMD(guideDepth, maxDepth, canvas.width, canvas.height);
+
+                        // Draw Roller Guide Wheels
                         ctx.fillStyle = '#f59e0b';
                         ctx.beginPath();
-                        ctx.arc(gPt.x - 5, gPt.y, 3, 0, Math.PI * 2);
-                        ctx.arc(gPt.x + 5, gPt.y, 3, 0, Math.PI * 2);
+                        ctx.arc(gPt.x - 5, gPt.y, 3.5, 0, Math.PI * 2);
+                        ctx.arc(gPt.x + 5, gPt.y, 3.5, 0, Math.PI * 2);
                         ctx.fill();
+
                         ctx.strokeStyle = '#ffffff';
                         ctx.lineWidth = 1;
                         ctx.stroke();
@@ -468,75 +593,75 @@
                 }
             });
 
-            // 4. Render Downhole SRP Pump Component
+            // 5. Downhole SRP Pump Visual
             let pumpPt = getCoordinatesForMD(pumpDepth, maxDepth, canvas.width, canvas.height);
             ctx.fillStyle = '#f59e0b';
-            ctx.fillRect(pumpPt.x - 6, pumpPt.y - 12, 12, 24);
+            ctx.fillRect(pumpPt.x - 7, pumpPt.y - 12, 14, 24);
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 1.5;
-            ctx.strokeRect(pumpPt.x - 6, pumpPt.y - 12, 12, 24);
+            ctx.strokeRect(pumpPt.x - 7, pumpPt.y - 12, 14, 24);
 
             ctx.fillStyle = '#f59e0b';
-            ctx.font = '10px sans-serif';
-            ctx.fillText(`SRP Pump @ ${pumpDepth} ft`, pumpPt.x + 18, pumpPt.y + 4);
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillText(`SRP Pump @ ${pumpDepth} ft`, pumpPt.x + 20, pumpPt.y + 4);
 
-            // 5. Draw Casing Survey Points Markers & Labels
+            // 6. Casing Survey Point Annotations
             casingSurveys.forEach(srv => {
                 let pt = getCoordinatesForMD(srv.md, maxDepth, canvas.width, canvas.height);
-                ctx.strokeStyle = '#ef4444';
+                ctx.strokeStyle = '#f43f5e';
                 ctx.setLineDash([2, 2]);
                 ctx.beginPath();
-                ctx.moveTo(pt.x - 20, pt.y);
-                ctx.lineTo(pt.x + 20, pt.y);
+                ctx.moveTo(pt.x - 22, pt.y);
+                ctx.lineTo(pt.x + 22, pt.y);
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                ctx.fillStyle = '#f87171';
+                ctx.fillStyle = '#f43f5e';
                 ctx.font = '9px sans-serif';
-                ctx.fillText(`Survey: ${srv.md} ft (${srv.inc}°)`, pt.x + 25, pt.y + 3);
+                ctx.fillText(`Survey: ${srv.md} ft (${srv.inc}°)`, pt.x + 28, pt.y + 3);
             });
 
-            // Depth Ruler Axis on Left
+            // Depth Axis Ruler
             ctx.strokeStyle = '#475569';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(40, 50);
-            ctx.lineTo(40, canvas.height - 30);
+            ctx.moveTo(45, 55);
+            ctx.lineTo(45, canvas.height - 35);
             ctx.stroke();
 
             for (let d = 0; d <= maxDepth; d += 500) {
                 let pt = getCoordinatesForMD(d, maxDepth, canvas.width, canvas.height);
                 ctx.fillStyle = '#94a3b8';
                 ctx.font = '9px sans-serif';
-                ctx.fillText(`${d} ft`, 5, pt.y + 3);
+                ctx.fillText(`${d} ft`, 10, pt.y + 3);
                 ctx.beginPath();
-                ctx.moveTo(35, pt.y);
-                ctx.lineTo(40, pt.y);
+                ctx.moveTo(40, pt.y);
+                ctx.lineTo(45, pt.y);
                 ctx.stroke();
             }
         }
 
-        // CSV Export Functionality
+        // Export Schedule CSV
         function exportTallyCSV() {
             if (computedTally.length === 0) {
-                alert("Data Tally kosong! Klik Render Schematic terlebih dahulu.");
+                alert("Data Tally belum dihitung!");
                 return;
             }
 
             const wellName = document.getElementById('wellName').value || 'WELL-SRP';
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += `TALLY REPORT SUCKER ROD PUMP - ${wellName.toUpperCase()}\n`;
-            csvContent += `No,Komponen / Deskripsi,OD (inch),Length (ft),Top Depth (ft),Bottom Depth (ft),Roller Guide Installed\n`;
+            csvContent += `SRP TALLY & ROLLER GUIDE DESIGN REPORT - ${wellName.toUpperCase()}\n`;
+            csvContent += `Design Mode: ${designMode.toUpperCase()}\n\n`;
+            csvContent += `No,Komponen Rod,OD (inch),Length (ft),Top Depth (ft),Bottom Depth (ft),Side Load Risk,Guide Density (per rod),Total Guides Needed\n`;
 
             computedTally.forEach(row => {
-                let rollerStr = row.roller ? "YES" : "NO";
-                csvContent += `${row.no},"${row.name}",${row.od},${row.len},${row.top.toFixed(2)},${row.bottom.toFixed(2)},${rollerStr}\n`;
+                csvContent += `${row.no},"${row.name}",${row.od},${row.len},${row.top.toFixed(2)},${row.bottom.toFixed(2)},${row.riskLevel},${row.guidesPerJoint},${row.totalSectionGuides}\n`;
             });
 
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Tally_Rod_${wellName.replace(/\s+/g, '_')}.csv`);
+            link.setAttribute("download", `Roller_Guide_Tally_Design_${wellName.replace(/\s+/g, '_')}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
